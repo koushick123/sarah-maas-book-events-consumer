@@ -6,9 +6,9 @@ import org.springframework.kafka.annotation.EnableKafka;
 
 @SpringBootApplication
 @EnableKafka
-public class KafkaConsumerApplication {
+public class BookEventsConsumerApplication {
     
     public static void main(String[] args) {
-        SpringApplication.run(KafkaConsumerApplication.class, args);
+        SpringApplication.run(BookEventsConsumerApplication.class, args);
     }
 }

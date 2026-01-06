@@ -1,17 +1,18 @@
 package com.sarahmaas.kafka.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sarahmaas.kafka.client.PythonApiClient;
 import com.sarahmaas.kafka.model.KafkaMessage;
 import com.sarahmaas.kafka.model.PageExtraction;
 import com.sarahmaas.kafka.repository.PageExtractionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
-
+import org.springframework.web.client.RestTemplate;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -19,11 +20,15 @@ import java.util.concurrent.atomic.AtomicLong;
 @RequiredArgsConstructor
 public class BookEventsConsumer {
     
-    private final PythonApiClient pythonApiClient;
     private final PageExtractionRepository repository;
     private final ObjectMapper objectMapper;
     
     private final AtomicLong messagesProcessed = new AtomicLong(0);
+
+    @Value("${ocr.uri}")
+    private String ocrUrl;
+
+    private final RestTemplateBuilder restTemplateBuilder;
     
     @KafkaListener(
             topics = "mytopic",
@@ -44,11 +49,9 @@ public class BookEventsConsumer {
             log.info("Processing page: {} for image path: {}", 
                     message.getPageNum(), "/" + message.getImagePath());
             
-            // Call Python API to extract text from image
-            String extractedText = pythonApiClient.extractTextFromImage(
-                    "/" + message.getImagePath(), 
-                    message.getPageNum()
-            );
+            // Call API to extract text from image
+            RestTemplate restTemplate = restTemplateBuilder.build();
+            String extractedText = restTemplate.getForObject(ocrUrl + "/" + message.getImagePath(), String.class);
             
             log.debug("Extracted text for page {}: {}...", 
                      message.getPageNum(), 

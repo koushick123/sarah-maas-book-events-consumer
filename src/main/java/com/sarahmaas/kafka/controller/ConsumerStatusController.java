@@ -46,7 +46,7 @@ public class ConsumerStatusController {
             statuses.add(new ConsumerStatus(
                     container.getListenerId(),
                     isRunning ? "running" : "stopped",
-                    container.getMetrics()
+                    container.metrics()
             ));
         }
         

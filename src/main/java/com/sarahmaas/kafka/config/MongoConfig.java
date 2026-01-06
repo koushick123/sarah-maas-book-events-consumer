@@ -4,18 +4,22 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.sarahmaas.kafka.client.PythonApiClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.config.AbstractMongoClientConfiguration;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
+import org.springframework.web.client.RestTemplate;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Configuration
@@ -23,24 +27,55 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class MongoConfig extends AbstractMongoClientConfiguration {
     
-    private final PythonApiClient pythonApiClient;
-    
-    @Value("${spring.data.mongodb.database}")
-    private String databaseName;
-    
+    private final RestTemplateBuilder restTemplateBuilder;
+
+    @Value("${credentials.uri}")
+    private String credentialsUrl;
+        
     @Override
     protected String getDatabaseName() {
-        return databaseName;
+        return "sarah-maas-db";
+    }
+    
+    /**
+     * Fetches MongoDB credentials from a remote HTTP endpoint
+     * @return Map containing username, password, and url
+     */
+    private Map<String, String> fetchMongoCredentials() {
+        try {
+            RestTemplate restTemplate = restTemplateBuilder.build();
+            log.info("Fetching MongoDB credentials from: {}", credentialsUrl);
+
+            @SuppressWarnings("unchecked")
+            Map<String, String> credentials = restTemplate.getForObject(credentialsUrl, Map.class);
+
+            if (credentials == null || credentials.isEmpty()) {
+                throw new RuntimeException("No credentials returned from endpoint");
+            }
+
+            log.debug("Successfully fetched MongoDB credentials = {}", credentials);
+            return credentials;
+            
+        } catch (Exception e) {
+            log.error("Error fetching MongoDB credentials from {}: {}", credentialsUrl, e.getMessage());
+            throw new RuntimeException("Failed to fetch MongoDB credentials", e);
+        }
     }
     
     @Override
     @Bean
     public MongoClient mongoClient() {
         try {
-            // Get decrypted credentials from Python API
-            String username = pythonApiClient.decryptMongoUser();
-            String password = pythonApiClient.decryptMongoPassword();
-            String hostUrl = pythonApiClient.decryptMongoHost();
+            // Fetch credentials from HTTP endpoint
+            Map<String, String> credentials = fetchMongoCredentials();
+            
+            String username = credentials.get("mongo_user");
+            String password = credentials.get("mongo_password");
+            String hostUrl = credentials.get("mongo_hosturl");
+            
+            if (username == null || password == null || hostUrl == null) {
+                throw new RuntimeException("Missing required credentials: username, password, or url");
+            }
             
             // URL encode credentials
             String encodedUsername = URLEncoder.encode(username, StandardCharsets.UTF_8.toString());

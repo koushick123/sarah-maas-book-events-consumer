@@ -7,7 +7,7 @@ spring:
   
   # Kafka Configuration
   kafka:
-    bootstrap-servers: kafka-local:9094
+    bootstrap-servers: https://verbose-space-guide-69pj5p75vrp3pp9-9094.app.github.dev:443
     consumer:
       group-id: test-group-2025
       auto-offset-reset: earliest
@@ -22,23 +22,10 @@ spring:
     listener:
       concurrency: 10  # Number of consumer threads
       ack-mode: record
-  
-  # MongoDB Configuration
-  data:
-    mongodb:
-      uri: ${MONGODB_URI:mongodb+srv://user:pass@host/?retryWrites=true&w=majority&appName=dev-cluster}
-      database: sarah-maas-db
 
-# Python API Configuration
-python:
-  api:
-    base-url: ${PYTHON_API_URL:http://localhost:5000}
-    timeout: 60000  # 60 seconds timeout for OCR operations
-    endpoints:
-      decrypt-user: /api/decrypt/user
-      decrypt-password: /api/decrypt/password
-      decrypt-host: /api/decrypt/host
-      ocr-extract: /api/ocr/extract
+# MongoDB Credentials Endpoint
+credentials.uri: https://verbose-space-guide-69pj5p75vrp3pp9-9000.app.github.dev/book/decrypt_mongo_credentials
+ocr.uri: https://verbose-space-guide-69pj5p75vrp3pp9-9000.app.github.dev/book/read_text_from_cropped_ocr_image
 
 # Actuator Configuration
 management:
