@@ -1,0 +1,64 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: kafka-consumer-service
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: kafka-local:9094
+    consumer:
+      group-id: test-group-2025
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        partition.assignment.strategy: org.apache.kafka.clients.consumer.RoundRobinAssignor
+        session.timeout.ms: 45000
+        heartbeat.interval.ms: 15000
+        max.poll.interval.ms: 300000  # 5 minutes for OCR processing
+    listener:
+      concurrency: 10  # Number of consumer threads
+      ack-mode: record
+  
+  # MongoDB Configuration
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb+srv://user:pass@host/?retryWrites=true&w=majority&appName=dev-cluster}
+      database: sarah-maas-db
+
+# Python API Configuration
+python:
+  api:
+    base-url: ${PYTHON_API_URL:http://localhost:5000}
+    timeout: 60000  # 60 seconds timeout for OCR operations
+    endpoints:
+      decrypt-user: /api/decrypt/user
+      decrypt-password: /api/decrypt/password
+      decrypt-host: /api/decrypt/host
+      ocr-extract: /api/ocr/extract
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.sarahmaas: DEBUG
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
