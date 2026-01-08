@@ -55,27 +55,3 @@ logging:
     org.apache.kafka.clients: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-
----
-# Profile for trying a non-TLS/plaintext broker (common test: port 9092)
-spring:
-  profiles: plaintext
-  kafka:
-    bootstrap-servers: verbose-space-guide-69pj5p75vrp3pp9-9094.app.github.dev:9092
-    consumer:
-      properties:
-        security.protocol: PLAINTEXT
-
----
-# Profile template for SASL over TLS if the broker requires authentication
-spring:
-  profiles: sasl_ssl
-  kafka:
-    bootstrap-servers: verbose-space-guide-69pj5p75vrp3pp9-9094.app.github.dev:9094
-    consumer:
-      properties:
-        security.protocol: SASL_SSL
-        sasl.mechanism: PLAIN
-        # Example JAAS config (uncomment and replace credentials if needed):
-        # sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<user>" password="<pass>";
-        # If using a custom CA, configure ssl.truststore.location/password here as well.
