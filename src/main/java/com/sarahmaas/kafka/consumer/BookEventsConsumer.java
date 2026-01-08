@@ -33,7 +33,7 @@ public class BookEventsConsumer {
     @KafkaListener(
             topics = "mytopic",
             groupId = "test-group-2025",
-            concurrency = "10",  // 10 concurrent consumers
+            concurrency = "1",  // 10 concurrent consumers
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void consumeMessage(ConsumerRecord<String, String> record, Acknowledgment ack) {

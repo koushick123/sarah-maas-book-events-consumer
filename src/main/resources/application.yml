@@ -7,10 +7,10 @@ spring:
   
   # Kafka Configuration
   kafka:
-    bootstrap-servers: https://verbose-space-guide-69pj5p75vrp3pp9-9094.app.github.dev:443
+    bootstrap-servers: verbose-space-guide-69pj5p75vrp3pp9-9094.app.github.dev:9094
     consumer:
       group-id: test-group-2025
-      auto-offset-reset: earliest
+      auto-offset-reset: latest
       enable-auto-commit: true
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -19,8 +19,13 @@ spring:
         session.timeout.ms: 45000
         heartbeat.interval.ms: 15000
         max.poll.interval.ms: 300000  # 5 minutes for OCR processing
+        security.protocol: PLAINTEXT
+        # ssl.endpoint.identification.algorithm: ""
+        # ssl.truststore.type: JKS
+        # ssl.truststore.location: /usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts
+        # ssl.truststore.password: changeit
     listener:
-      concurrency: 10  # Number of consumer threads
+      concurrency: 1  # Number of consumer threads
       ack-mode: record
 
 # MongoDB Credentials Endpoint
@@ -45,7 +50,32 @@ logging:
   level:
     root: INFO
     com.sarahmaas: DEBUG
-    org.springframework.kafka: INFO
-    org.apache.kafka: WARN
+    org.springframework.kafka: DEBUG
+    org.apache.kafka: DEBUG
+    org.apache.kafka.clients: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+---
+# Profile for trying a non-TLS/plaintext broker (common test: port 9092)
+spring:
+  profiles: plaintext
+  kafka:
+    bootstrap-servers: verbose-space-guide-69pj5p75vrp3pp9-9094.app.github.dev:9092
+    consumer:
+      properties:
+        security.protocol: PLAINTEXT
+
+---
+# Profile template for SASL over TLS if the broker requires authentication
+spring:
+  profiles: sasl_ssl
+  kafka:
+    bootstrap-servers: verbose-space-guide-69pj5p75vrp3pp9-9094.app.github.dev:9094
+    consumer:
+      properties:
+        security.protocol: SASL_SSL
+        sasl.mechanism: PLAIN
+        # Example JAAS config (uncomment and replace credentials if needed):
+        # sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<user>" password="<pass>";
+        # If using a custom CA, configure ssl.truststore.location/password here as well.
