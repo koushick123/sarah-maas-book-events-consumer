@@ -1,0 +1,57 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: kafka-consumer-service
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9094
+    consumer:
+      group-id: test-group-2025
+      auto-offset-reset: latest
+      enable-auto-commit: true
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        partition.assignment.strategy: org.apache.kafka.clients.consumer.RoundRobinAssignor
+        session.timeout.ms: 45000
+        heartbeat.interval.ms: 15000
+        max.poll.interval.ms: 300000  # 5 minutes for OCR processing
+        security.protocol: PLAINTEXT
+        # ssl.endpoint.identification.algorithm: ""
+        # ssl.truststore.type: JKS
+        # ssl.truststore.location: /usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts
+        # ssl.truststore.password: changeit
+    listener:
+      concurrency: 1  # Number of consumer threads
+      ack-mode: record
+
+# MongoDB Credentials Endpoint
+credentials.uri: http://localhost:9000/book/decrypt_mongo_credentials
+ocr.uri: http://localhost:9000/book/read_text_from_cropped_ocr_image
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.sarahmaas: DEBUG
+    org.springframework.kafka: DEBUG
+    org.apache.kafka: DEBUG
+    org.apache.kafka.clients: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
