@@ -1,2 +1,2 @@
-docker image rm -f kafka-consumer-service:1.0
-docker build -t kafka-consumer-service:1.0 .
+docker image rm -f koushick123/book-events-consumer:1.0
+docker build -t koushick123/book-events-consumer:1.0 .

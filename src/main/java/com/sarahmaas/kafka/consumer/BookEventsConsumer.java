@@ -68,11 +68,19 @@ public class BookEventsConsumer {
             RestTemplate restTemplate = restTemplateBuilder.build();
             String extractedText = restTemplate.getForObject(ocrUrl + "/" + message.getImagePath(), String.class);
 
-            log.debug("Extracted text for page {}: {}...",
-                    message.getPageNum(),
-                    extractedText != null && extractedText.length() > 5
-                            ? extractedText.substring(0, Math.min(5, extractedText.length()))
-                            : "");
+                        // Normalize extracted text: trim and strip surrounding quotes if present
+                        if (extractedText != null) {
+                                extractedText = extractedText.trim();
+                                if (extractedText.length() >= 2 && extractedText.startsWith("\"") && extractedText.endsWith("\"")) {
+                                        extractedText = extractedText.substring(1, extractedText.length() - 1);
+                                }
+                        }
+
+                        log.debug("Extracted text for page {}: {}...",
+                                        message.getPageNum(),
+                                        extractedText != null && extractedText.length() > 5
+                                                        ? extractedText.substring(0, Math.min(5, extractedText.length()))
+                                                        : "");
 
             PageExtraction extraction = PageExtraction.builder()
                     .bookId(message.getBookId())
