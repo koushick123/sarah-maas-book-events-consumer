@@ -4,15 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sarahmaas.kafka.model.KafkaMessage;
 import com.sarahmaas.kafka.model.PageExtraction;
 import com.sarahmaas.kafka.repository.PageExtractionRepository;
+import com.sarahmaas.kafka.service.AzureOcrService;
+import com.sarahmaas.kafka.service.CredentialsDecryptorService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -23,7 +25,6 @@ public class BookEventsConsumer {
 
     private final PageExtractionRepository repository;
     private final ObjectMapper objectMapper;
-    private final RestTemplateBuilder restTemplateBuilder;
 
     private final AtomicLong messagesProcessed = new AtomicLong(0);
 
@@ -39,12 +40,16 @@ public class BookEventsConsumer {
     @Value("${KAFKA_GROUP:test-group-2025}")
     private String groupId;
 
+    @Autowired
+    CredentialsDecryptorService credentialsDecryptorService;
+
+    @Autowired
+    AzureOcrService azureOcrService;
+
     public BookEventsConsumer(PageExtractionRepository repository,
-                              ObjectMapper objectMapper,
-                              RestTemplateBuilder restTemplateBuilder) {
+                              ObjectMapper objectMapper) {
         this.repository = repository;
         this.objectMapper = objectMapper;
-        this.restTemplateBuilder = restTemplateBuilder;
     }
 
     @KafkaListener(
@@ -65,22 +70,23 @@ public class BookEventsConsumer {
             log.info("Processing page: {} for image path: {}",
                     message.getPageNum(), "/" + message.getImagePath());
 
-            RestTemplate restTemplate = restTemplateBuilder.build();
-            String extractedText = restTemplate.getForObject(ocrUrl + "/" + message.getImagePath(), String.class);
+            String azureOcrApi = credentialsDecryptorService.decryptAzureOcrApi();
+            String azureOcrHost = credentialsDecryptorService.decryptAzureOcrHost();
 
-                        // Normalize extracted text: trim and strip surrounding quotes if present
-                        if (extractedText != null) {
-                                extractedText = extractedText.trim();
-                                if (extractedText.length() >= 2 && extractedText.startsWith("\"") && extractedText.endsWith("\"")) {
-                                        extractedText = extractedText.substring(1, extractedText.length() - 1);
-                                }
-                        }
+            String extractedText = azureOcrService.readTextFromCroppedOcrImage(message.getImagePath());
+            // Normalize extracted text: trim and strip surrounding quotes if present
+            if (extractedText != null) {
+                    extractedText = extractedText.trim();
+                    if (extractedText.length() >= 2 && extractedText.startsWith("\"") && extractedText.endsWith("\"")) {
+                            extractedText = extractedText.substring(1, extractedText.length() - 1);
+                    }
+            }
 
-                        log.debug("Extracted text for page {}: {}...",
-                                        message.getPageNum(),
-                                        extractedText != null && extractedText.length() > 5
-                                                        ? extractedText.substring(0, Math.min(5, extractedText.length()))
-                                                        : "");
+            log.debug("Extracted text for page {}: {}...",
+                            message.getPageNum(),
+                            extractedText != null && extractedText.length() > 5
+                                            ? extractedText.substring(0, Math.min(5, extractedText.length()))
+                                            : "");
 
             PageExtraction extraction = PageExtraction.builder()
                     .bookId(message.getBookId())
