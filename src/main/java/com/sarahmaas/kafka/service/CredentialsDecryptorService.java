@@ -33,7 +33,7 @@ public class CredentialsDecryptorService {
         }
         
         try {
-            String encryptedData = Files.readString(Paths.get("src//main//resources//encryptedazureocrapi.txt"));
+            String encryptedData = Files.readString(Paths.get("src/main/resources/encryptedazureocrapi.txt"));
             return decryptFernet(encryptionKey, encryptedData);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read encryptedazureocrapi.txt", e);
@@ -54,7 +54,7 @@ public class CredentialsDecryptorService {
         }
         
         try {
-            String encryptedData = Files.readString(Paths.get("src//main//resources//encryptedazureocrhost.txt"));
+            String encryptedData = Files.readString(Paths.get("src/main/resources/encryptedazureocrhost.txt"));
             return decryptFernet(encryptionKey, encryptedData);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read encryptedazureocrhost.txt", e);
