@@ -7,6 +7,7 @@ import com.azure.ai.vision.imageanalysis.models.VisualFeatures;
 import com.azure.core.credential.KeyCredential;
 import com.azure.core.util.BinaryData;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -22,7 +23,8 @@ import java.util.List;
 public class AzureOcrService {
 
     private final ImageAnalysisClient client;
-    private static final String FILE_PATH_PREFIX = "pages_for_OCR/";
+    @Value("${file-path.prefix}")
+    private String FILE_PATH_PREFIX;
 
     /**
      * Constructor that initializes the Azure Computer Vision client.     *
@@ -54,10 +56,12 @@ public class AzureOcrService {
         List<String> extractedText = new ArrayList<>();
 
         // Iteratively increase the crop ratio until text is found or max ratio is reached
+        System.out.println("File path prefix = "+FILE_PATH_PREFIX);
         while ((endImageRatio - startImageRatio) <= 0.1 && extractedText.isEmpty()) {
             try {
                 // Load image
-                BufferedImage img = ImageIO.read(new File(FILE_PATH_PREFIX + imagePath));
+                String final_image_path = FILE_PATH_PREFIX +"/"+ imagePath;
+                BufferedImage img = ImageIO.read(new File(final_image_path));
                 int width = img.getWidth();
                 int height = img.getHeight();
 
@@ -79,6 +83,7 @@ public class AzureOcrService {
                 byte[] headerBytes = buffer.toByteArray();
 
                 try {
+                    long startTime = System.currentTimeMillis();
                     // Call Azure Image Analysis API with READ feature
                     BinaryData imageData = BinaryData.fromBytes(headerBytes);
 
@@ -98,6 +103,9 @@ public class AzureOcrService {
                                 }
                             });
                         });
+
+                        long endTime = System.currentTimeMillis();
+                        System.out.println("Time taken for OCR = "+(endTime - startTime)+ " milli seconds ");
 
                         if (!extractedText.isEmpty()) {
                             System.out.printf("Extracted text at ratio %.2f-%.2f: %s%n",

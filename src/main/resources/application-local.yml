@@ -1,10 +1,12 @@
 server:
   port: 8000
 
+file-path.prefix: /home/koushick/sarah-maas-pages-for-OCR
+
 spring:
   application:
     name: kafka-consumer-service
-  
+
   # Kafka Configuration
   kafka:
     bootstrap-servers: localhost:9094

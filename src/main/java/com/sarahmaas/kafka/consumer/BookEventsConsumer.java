@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
@@ -41,9 +40,6 @@ public class BookEventsConsumer {
     private String groupId;
 
     @Autowired
-    CredentialsDecryptorService credentialsDecryptorService;
-
-    @Autowired
     AzureOcrService azureOcrService;
 
     public BookEventsConsumer(PageExtractionRepository repository,
@@ -68,10 +64,7 @@ public class BookEventsConsumer {
             KafkaMessage message = objectMapper.readValue(record.value(), KafkaMessage.class);
 
             log.info("Processing page: {} for image path: {}",
-                    message.getPageNum(), "/" + message.getImagePath());
-
-            String azureOcrApi = credentialsDecryptorService.decryptAzureOcrApi();
-            String azureOcrHost = credentialsDecryptorService.decryptAzureOcrHost();
+                    message.getPageNum(), " - " + message.getImagePath());
 
             String extractedText = azureOcrService.readTextFromCroppedOcrImage(message.getImagePath());
             // Normalize extracted text: trim and strip surrounding quotes if present
