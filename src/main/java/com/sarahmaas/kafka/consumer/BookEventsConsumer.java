@@ -49,17 +49,18 @@ public class BookEventsConsumer {
     }
 
     @KafkaListener(
-            topics = "${KAFKA_TOPIC:mytopic}",
-            groupId = "${KAFKA_GROUP:test-group-2025}",
-            concurrency = "${SPRING_KAFKA_LISTENER_CONCURRENCY:1}",
+            topics = "${spring.kafka.topic}",
+            groupId = "${spring.kafka.consumer.group-id}",
+            concurrency = "${spring.kafka.listener.concurrency}",
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void consumeMessage(ConsumerRecord<String, String> record, Acknowledgment ack) {
         long startTime = System.currentTimeMillis();
+        String workerId = Thread.currentThread().getName() + "-" + Thread.currentThread().getId();
 
         try {
-            log.info("Worker received message from partition: {} at offset: {}",
-                    record.partition(), record.offset());
+            log.info("Worker {} received message from partition: {} at offset: {}",
+                    workerId.substring(workerId.indexOf("#")+1), record.partition(), record.offset());
 
             KafkaMessage message = objectMapper.readValue(record.value(), KafkaMessage.class);
 

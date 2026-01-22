@@ -10,6 +10,7 @@ spring:
   # Kafka Configuration
   kafka:
     bootstrap-servers: localhost:9094
+    topic: mytopic
     consumer:
       group-id: test-group-2025
       auto-offset-reset: latest
@@ -21,13 +22,17 @@ spring:
         session.timeout.ms: 45000
         heartbeat.interval.ms: 15000
         max.poll.interval.ms: 300000  # 5 minutes for OCR processing
+        # Reduce polling frequency when no messages
+#        fetch.min.bytes: 1
+        fetch.max.wait.ms: 5000  # Wait up to 5 seconds for data
+#        fetch.max.bytes: 52428800  # 50MB
         security.protocol: PLAINTEXT
         # ssl.endpoint.identification.algorithm: ""
         # ssl.truststore.type: JKS
         # ssl.truststore.location: /usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts
         # ssl.truststore.password: changeit
     listener:
-      concurrency: 1  # Number of consumer threads
+      concurrency: 10  # Number of consumer threads
       ack-mode: record
 
 # MongoDB Credentials Endpoint
